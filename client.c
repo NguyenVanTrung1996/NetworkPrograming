@@ -13,18 +13,17 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <inttypes.h>
-
-
 #include "protocol.h"
 // #include "authenticate.h"
 #include "validate.h"
 #include "status.h"
+#define DATA_SIZE 1000
 char current_user[255];
 int client_sock;
 int under_client_sock;
 struct sockaddr_in server_addr; /* server's address information */
 pthread_t tid;
-char choose;
+int choose;
 Message *mess;
 int isOnline = 0;
 char fileRepository[100];
@@ -384,10 +383,11 @@ void logoutFunc(char *current_user){
 * @return void
 */
 void menuAuthenticate() {
-	printf("\n---------------FileShareSystem-------------\n");
-	printf("\n1 - Login");
-	printf("\n2 - Register");
-	printf("\n3 - Exit");
+	printf("\n=======================FileShareSystem===================\n");
+	printf("\n\t\t\t* Login     - 1");
+	printf("\n\t\t\t* Register  - 2");
+	printf("\n\t\t\t* Exit      - 3");
+	printf("\n=========================================================\n");
 	printf("\nPlease choose: ");
 }
 
@@ -397,12 +397,13 @@ void menuAuthenticate() {
 * @return void
 */
 void mainMenu() {
-	printf("\n---------------FileShareSystem-------------\n");
-	printf("\n1 - Search File In Shared System");
-	printf("\n2 - View Your List Files");
-	printf("\n3 - Create new file");
-	printf("\n4 - User Manual");
-	printf("\n5 - Logout");
+	printf("\n=======================FileShareSystem===================\n");
+	printf("\n\t\t\t1 Search File In Shared System ");
+	printf("\n\t\t\t2 View Your List Files ");
+	printf("\n\t\t\t3 Create new file ");
+	printf("\n\t\t\t4 User Manual ");
+	printf("\n\t\t\t5 Logout ");
+	printf("\n=========================================================");
 	printf("\nPlease choose: ");
 }
 
@@ -610,6 +611,7 @@ void handleSearchFile() {
 	sendMessage(client_sock, *mess);
 	printWatingMsg();
 	receiveMessage(client_sock, mess);
+	printf(mess->payload);
 	if(showListSelectUser(mess->payload, selectedUser, fileName) == 1) {
 		handleDownloadFile(selectedUser, fileName);
 	}	
@@ -642,46 +644,52 @@ void manual() {
 
 void createNewFile()
 {
-	DIR *dir;
+	char data[DATA_SIZE];
 	FILE * fPtr;
 	struct dirent *ent;
 	char folderPath[100];
-	sprintf(folderPath, "./%s", current_user);
-	printf("%s\n",current_user);
+	// sprintf(folderPath, "./%s", current_user); /*current_user : name_user*/
 	char file_name[100];
-	printf("Input name file : ");
-	scanf("%s",file_name);
-	fPtr = fopen(strcat(folderPath,file_name), "w");
+	printf("Please enter the file name: ");
+	gets(file_name);
+	char current_user_path[100];
+	strcpy(current_user_path,current_user);
+	strcat(current_user_path,"/");
+	fPtr = fopen(strcat(current_user_path,file_name), "w");
 	if(fPtr == NULL)
     {
         printf("Unable to create file.\n");
         exit(0);
     }
-	fclose(fPtr);
-	printf("%s\n",folderPath);
 
+	printf("Enter contents to store in file : \n");
+	fgets(data, DATA_SIZE, stdin);
+	fputs(data, fPtr);
+	fclose(fPtr);
+	printf("File created and saved successfully. 🙂 \n");
+	return 0;
 }
 
 
 void requestFileFunc() {
 	mainMenu();
-	scanf("%c", &choose);
+	scanf("%d", &choose);
 	while(getchar() != '\n');
 	switch (choose) {
-		case '1':
+		case 1:
 			handleSearchFile();
 			break;
-		case '2':
+		case 2:
 			// searchFileFunc();
 			showListFile();
 			break;
-		case '3':
+		case 3:
 			createNewFile();
 			break;
-		case '4':
+		case 4:
 			manual();
 			break;
-		case '5':
+		case 5:
 			logoutFunc(current_user);
 			break;
 		default:
